@@ -66,6 +66,3 @@ export const fetchUsers = (skip = 0, limit = 100) => api.get(`/users?skip=${skip
 export const createUser = (userData) => api.post('/users', userData);
 export const updateUser = (userId, userData) => api.put(`/users/${userId}`, userData);
 export const deleteUser = (userId) => api.delete(`/users/${userId}`);
-
-export const saveFrontendData = (data) => api.post('/cookies', { data });
-export const loadFrontendData = () => api.get('/cookies');

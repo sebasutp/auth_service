@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { loginUser, fetchCurrentUser, loadFrontendData, saveFrontendData } from '../services/api';
+import { loginUser, fetchCurrentUser} from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -8,7 +8,6 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(() => localStorage.getItem('accessToken'));
     const [isLoading, setIsLoading] = useState(true);
-    const [frontendSettings, setFrontendSettings] = useState({}); // For /cookies data
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -19,9 +18,6 @@ export const AuthProvider = ({ children }) => {
             const { data: currentUser } = await fetchCurrentUser();
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             setUser(currentUser);
-             // Load frontend settings after successful login
-            const { data: cookiesData } = await loadFrontendData();
-            setFrontendSettings(cookiesData.data || {});
             return currentUser; // Return user data for potential chaining
         } catch (error) {
             console.error("Failed to fetch current user:", error);
@@ -53,7 +49,6 @@ export const AuthProvider = ({ children }) => {
     const logout = useCallback(() => {
         setUser(null);
         setToken(null);
-        setFrontendSettings({});
         localStorage.removeItem('accessToken');
         localStorage.removeItem('currentUser');
     }, []);
@@ -106,9 +101,6 @@ export const AuthProvider = ({ children }) => {
                  if(storedUser) {
                     try {
                         setUser(JSON.parse(storedUser));
-                        // Optionally try to load settings even if token seems missing (might be stale)
-                        // const { data: cookiesData } = await loadFrontendData(); // Requires valid token! Skip if no token.
-                        // setFrontendSettings(cookiesData.data || {});
                     } catch (e) { console.error("Error parsing stored user", e)}
                  }
             }
@@ -118,25 +110,14 @@ export const AuthProvider = ({ children }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps 
     }, [processToken]); // Add processToken dependency
 
-    // Persist frontend settings to backend
-    const saveSettings = useCallback(async (newSettings) => {
-        if (!user) return; // Only save if logged in
-        try {
-            await saveFrontendData(newSettings);
-            setFrontendSettings(newSettings);
-        } catch (error) {
-            console.error("Failed to save frontend settings:", error);
-        }
-    }, [user]);
-
 
     if (!navigate) {
         throw new Error('useNavigate must be used within a Router');
     }
 
     const contextValue = useMemo(() => ({
-        user, token, isLoading, login, logout, processToken, frontendSettings, saveSettings
-    }), [user, token, isLoading, login, logout, processToken, frontendSettings, saveSettings]);
+        user, token, isLoading, login, logout, processToken
+    }), [user, token, isLoading, login, logout, processToken]);
 
     return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
