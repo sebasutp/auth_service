@@ -1,0 +1,8 @@
+fastapi[all] # Includes uvicorn, pydantic, etc.
+sqlalchemy
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+pydantic-settings # For cleaner config management
+httpx # For making requests to Google OAuth
+alembic # For database migrations (optional but recommended)
