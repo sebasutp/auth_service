@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn, contextlib
@@ -77,18 +77,11 @@ app_obj = FastAPI(
     lifespan=lifespan  # Correctly pass the lifespan function here
 )
 
-# CORS Configuration
-origins = [
-    settings.frontend_url,  # The origin of your React frontend
-    "http://localhost",  # Allow localhost if needed
-    "http://localhost:8080",  # Allow other common dev ports
-    # Add origins for your *other* client applications here!
-    # e.g., "http://my-other-app.local:3000"
-]
+
 
 app_obj.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,  # Important for cookies/auth headers
     allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
     allow_headers=["*"],  # Allow all headers
@@ -99,8 +92,7 @@ app_obj.include_router(api_router)
 
 
 # Root endpoint (optional)
-@app_obj.get("/")
-
+@app_obj.get("")
 async def root():
     return {"message": "Auth Service is running"}
 

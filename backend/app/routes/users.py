@@ -11,7 +11,7 @@ router = APIRouter()
 # --- User Management (Admin Only) ---
 
 # Use the specific admin dependency here
-@router.post("/", response_model=models.UserPublic, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=models.UserPublic, status_code=status.HTTP_201_CREATED)
 def create_new_user(
     user: models.UserCreate, # Use the one requiring password
     db: Session = Depends(get_db),
@@ -32,7 +32,7 @@ def create_new_user(
     return crud.create_user(db=db, user=user_internal)
 
 
-@router.get("/", response_model=List[models.UserPublic])
+@router.get("", response_model=List[models.UserPublic])
 def read_all_users(
     skip: int = 0,
     limit: int = 100,

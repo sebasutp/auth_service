@@ -8,7 +8,7 @@ from ..auth import auth_handler
 
 router = APIRouter()
 
-@router.post("/", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("", status_code=status.HTTP_204_NO_CONTENT)
 async def save_frontend_data(
     payload: models.CookiesData,
     db: Session = Depends(get_db),
@@ -22,7 +22,7 @@ async def save_frontend_data(
     return None # Return 204 No Content
 
 
-@router.get("/", response_model=models.CookiesData)
+@router.get("", response_model=models.CookiesData)
 async def get_frontend_data(
     db: Session = Depends(get_db),
     current_user: db_models.User = Depends(auth_handler.get_current_active_user) # Require logged-in user
