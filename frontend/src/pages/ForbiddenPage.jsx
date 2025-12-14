@@ -3,8 +3,10 @@ import { Container, Typography, Paper, Button, Box, Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
+import { useAuth } from '../contexts/AuthContext';
 const ForbiddenPage = () => {
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     return (
         <Container component="main" maxWidth="sm">
@@ -19,12 +21,17 @@ const ForbiddenPage = () => {
                             You do not have the necessary permissions to access this page or resource.
                             Please contact the administrator if you believe this is an error.
                         </Typography>
-                        <Box>
-                            <Button variant="contained" onClick={() => navigate(-1)} sx={{ mr: { xs: 0, sm: 1 }, mb: { xs: 1, sm: 0 } }}> {/* Adjust margin */}
-                                Go Back
-                            </Button>
-                            <Button variant="outlined" onClick={() => navigate('/')}>
-                                Go Home
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button variant="contained" onClick={() => navigate(-1)}>
+                                    Go Back
+                                </Button>
+                                <Button variant="outlined" onClick={() => navigate('/')}>
+                                    Go Home
+                                </Button>
+                            </Box>
+                            <Button color="error" onClick={logout}>
+                                Logout
                             </Button>
                         </Box>
                     </Paper>
