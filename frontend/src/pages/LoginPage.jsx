@@ -37,10 +37,26 @@ const LoginPage = () => {
     // If user is already logged in, redirect them away from login page
     useEffect(() => {
         if (user) {
+            // Check URL param first, then localStorage (for Google Login flow)
+            const redirectUri = searchParams.get('redirect_uri') || localStorage.getItem('auth_redirect_uri');
+
+            // If redirect_uri is present (external app), redirect there with token
+            if (redirectUri) {
+                // Get token from storage since useAuth might not expose it directly or we need to be sure
+                const token = localStorage.getItem('accessToken');
+                if (token) {
+                    console.log("User already logged in, redirecting to external app:", redirectUri);
+                    // Clear the stored uri
+                    localStorage.removeItem('auth_redirect_uri');
+                    window.location.href = `${redirectUri}#access_token=${token}`;
+                    return;
+                }
+            }
+
             console.log("User already logged in, redirecting from Login page to:", from);
             navigate(from, { replace: true });
         }
-    }, [user, navigate, from]);
+    }, [user, navigate, from, searchParams]);
 
     useEffect(() => {
         // Display messages based on query params from redirects
@@ -64,6 +80,16 @@ const LoginPage = () => {
         const success = await login(email, password);
         setLoading(false);
         if (success) {
+            const redirectUri = searchParams.get('redirect_uri') || localStorage.getItem('auth_redirect_uri');
+            if (redirectUri) {
+                const token = localStorage.getItem('accessToken');
+                if (token) {
+                    console.log("Login successful, redirecting to external app:", redirectUri);
+                    localStorage.removeItem('auth_redirect_uri');
+                    window.location.href = `${redirectUri}#access_token=${token}`;
+                    return;
+                }
+            }
             console.log("Login successful, navigating to:", from);
             navigate(from, { replace: true });
         } else {
@@ -84,6 +110,12 @@ const LoginPage = () => {
         // Get client app redirect_uri and scope from query params if they exist
         // These are passed TO the backend /login/google endpoint
         const clientRedirectUri = searchParams.get('redirect_uri');
+
+        // Save redirect_uri to localStorage so we often find it after the round trip
+        if (clientRedirectUri) {
+            localStorage.setItem('auth_redirect_uri', clientRedirectUri);
+        }
+
         const clientScope = searchParams.get('client_scope');
 
         googleLogin(clientRedirectUri || frontendCallbackUrl, clientScope);

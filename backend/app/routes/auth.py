@@ -146,7 +146,7 @@ async def auth_google_callback(
 
         # Redirect back to the *original client app* (or our frontend) with the token
         # Using URL fragment (#) is generally preferred for SPAs
-        redirect_url = f"{client_redirect_uri}#token={access_token}&token_type=bearer&login_status={login_status}"
+        redirect_url = f"{client_redirect_uri}#access_token={access_token}&token_type=bearer&login_status={login_status}"
 
         return RedirectResponse(redirect_url)
 
