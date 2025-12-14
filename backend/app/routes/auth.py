@@ -128,20 +128,6 @@ async def auth_google_callback(
                 print(f"Error parsing state: {e}")
                 pass
 
-        # --- Security: Validate Redirect URI ---
-        # Normalize for comparison? Strict exact match is safer.
-        # Ensure allowed_origins is populated in production.
-        if settings.allowed_origins:
-            # Check if client_redirect_uri starts with any allowed origin
-            if not any(client_redirect_uri.startswith(origin) for origin in settings.allowed_origins):
-                 raise HTTPException(status_code=400, detail="Invalid redirect_uri. Domain not in allowlist.")
-        else:
-            # Fallback warning if not configured (or fail open/close based on policy)
-            # For now, if empty, we might allow frontend_url ONLY, or warn.
-            # To be safe, if list is empty, ONLY allow frontend_url
-            if client_redirect_uri != settings.frontend_url:
-                 raise HTTPException(status_code=400, detail="Redirect URI validation failed (Allowlist empty).")
-
         # Check if user has the scope requested by the client app
         if requested_scope and requested_scope not in user.scopes:
             login_status = "access_denied"

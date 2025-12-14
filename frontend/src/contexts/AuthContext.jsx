@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { loginUser, fetchCurrentUser} from '../services/api';
+import { loginUser, fetchCurrentUser } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -34,12 +34,12 @@ export const AuthProvider = ({ children }) => {
             return true; // Indicate success
         } catch (error) {
             console.error("Login failed:", error);
-             setUser(null);
-             setToken(null);
-             localStorage.removeItem('accessToken');
-             localStorage.removeItem('currentUser');
-             setIsLoading(false);
-             return false; // Indicate failure
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('currentUser');
+            setIsLoading(false);
+            return false; // Indicate failure
         } finally {
             setIsLoading(false);
         }
@@ -63,27 +63,27 @@ export const AuthProvider = ({ children }) => {
             let fromUrl = false;
 
             // Check URL fragment for token (e.g., after Google Redirect)
-            if (window.location.hash.includes('token=')) {
+            if (window.location.hash.includes('token=') || window.location.hash.includes('access_token=')) {
                 const params = new URLSearchParams(window.location.hash.substring(1)); // Remove '#'
-                foundToken = params.get('token');
+                foundToken = params.get('access_token') || params.get('token');
                 const loginStatus = params.get('login_status');
                 // Clean the URL
-                 window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-                 fromUrl = true;
+                window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+                fromUrl = true;
 
-                 if (loginStatus === 'access_denied') {
+                if (loginStatus === 'access_denied') {
                     // Handle access denied case (e.g., show a message)
                     // For now, just prevent login and clear token
                     console.warn("Login successful but access denied for requested scope.");
                     navigate('/forbidden', { replace: true });
                     // navigate('/access-denied?reason=scope');
-                 }
+                }
             }
 
             if (foundToken) {
                 try {
-                     console.log("Token found, processing...");
-                     await processToken(foundToken); // Validates token and fetches user
+                    console.log("Token found, processing...");
+                    await processToken(foundToken); // Validates token and fetches user
                 } catch (error) {
                     console.error("Token validation failed:", error);
                     // Error handling (like logout) is done within processToken/interceptor
@@ -97,12 +97,12 @@ export const AuthProvider = ({ children }) => {
                 console.log("No token found.");
                 // Attempt to load user from localStorage if no token is found initially
                 // This handles cases where the tab was closed and reopened
-                 const storedUser = localStorage.getItem('currentUser');
-                 if(storedUser) {
+                const storedUser = localStorage.getItem('currentUser');
+                if (storedUser) {
                     try {
                         setUser(JSON.parse(storedUser));
-                    } catch (e) { console.error("Error parsing stored user", e)}
-                 }
+                    } catch (e) { console.error("Error parsing stored user", e) }
+                }
             }
             setIsLoading(false);
         };
