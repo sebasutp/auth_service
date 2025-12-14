@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     google_client_secret: str | None = None
     google_redirect_uri: str | None = None
 
+    # Security
+    # List of allowed origins (e.g., "http://localhost:5173", "https://myapp.com")
+    # Redirect URIs must start with one of these.
+    allowed_origins: list[str] = []
+
     # Frontend
     frontend_url: str = "http://localhost:5173"
 
