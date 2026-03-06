@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Form, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Form, Query, Response, Request
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -37,18 +37,8 @@ async def login_for_access_token(
         expires_delta=access_token_expires,
     )
 
-    # Set token in an HttpOnly cookie (more secure for web apps)
-    # response.set_cookie(
-    #     key="access_token",
-    #     value=f"Bearer {access_token}",
-    #     httponly=True,
-    #     max_age=settings.access_token_expire_minutes * 60,
-    #     expires=settings.access_token_expire_minutes * 60,
-    #     samesite="lax", # Or "strict"
-    #     secure=False # Set to True if using HTTPS
-    # )
+    auth_handler.set_auth_cookie(response, access_token)
 
-    # Return token in response body as well for SPA flexibility
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -148,7 +138,13 @@ async def auth_google_callback(
         # Using URL fragment (#) is generally preferred for SPAs
         redirect_url = f"{client_redirect_uri}#access_token={access_token}&token_type=bearer&login_status={login_status}"
 
-        return RedirectResponse(redirect_url)
+        # Note: Google callback doesn't set cookie automatically since it's a redirect,
+        # but the frontend will handle storing it. For full cross-subdomain,
+        # you might want to set the cookie here before redirecting.
+        response = RedirectResponse(redirect_url)
+        auth_handler.set_auth_cookie(response, access_token)
+
+        return response
 
     except httpx.HTTPStatusError as e:
         # Log the error details from httpx
@@ -163,8 +159,32 @@ async def auth_google_callback(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred during Google sign-in.")
 
 @router.get("/me", response_model=models.UserPublic)
-async def read_users_me(current_user: models.UserPublic = Depends(auth_handler.get_current_active_user)):
+async def read_users_me(
+    request: Request,
+    db: Session = Depends(get_db)
+):
     """
-    Get current logged-in user's public details.
+    Get current logged-in user's public details, checking the cookie.
     """
-    return current_user
+    token = request.cookies.get("access_token")
+    if not token:
+        # Fallback to standard token auth if no cookie
+        # We need to manually invoke the dependency since we bypassed it in the signature
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    try:
+        token_data = auth_handler.decode_access_token(token, db)
+        user = crud.get_user(db, user_id=token_data.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+    except Exception as e:
+         raise HTTPException(status_code=401, detail="Invalid token")
+
+@router.post("/logout")
+def logout(response: Response):
+    auth_handler.delete_auth_cookie(response)
+    return {"message": "Logged out"}
